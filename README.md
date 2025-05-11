@@ -22,6 +22,7 @@ If you want to use localhost without ngrok because you don't care, you can overr
 
 1. Build and start the server:
    ```bash
+   npm i
    npm run build
    npm run start
    ```
