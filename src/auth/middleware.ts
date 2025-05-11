@@ -25,13 +25,21 @@ export async function requireAuthentication(
 ) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    sendUnauthorizedErrorResponse(res);
+    sendUnauthorizedErrorResponse(
+      res,
+      TOKEN_VALIDATION_ERROR_CODE.invalidRequest,
+      "Missing authorization header"
+    );
     return;
   }
 
   const [type, token] = authHeader.split(" ");
   if (type.toLowerCase() !== "bearer" || !token) {
-    sendUnauthorizedErrorResponse(res);
+    sendUnauthorizedErrorResponse(
+      res,
+      TOKEN_VALIDATION_ERROR_CODE.invalidRequest,
+      "Invalid authorization scheme or token"
+    );
     return;
   }
 
@@ -42,7 +50,11 @@ export async function requireAuthentication(
       !decodedToken.header.kid ||
       typeof decodedToken.header.kid !== "string"
     ) {
-      sendUnauthorizedErrorResponse(res);
+      sendUnauthorizedErrorResponse(
+        res,
+        TOKEN_VALIDATION_ERROR_CODE.invalidToken,
+        "Invalid token format or missing key ID"
+      );
       return;
     }
 
@@ -57,7 +69,7 @@ export async function requireAuthentication(
       sendUnauthorizedErrorResponse(
         res,
         TOKEN_VALIDATION_ERROR_CODE.invalidToken,
-        "Invalid header type."
+        "Invalid token type"
       );
       return;
     }
