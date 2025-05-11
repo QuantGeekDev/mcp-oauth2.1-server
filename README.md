@@ -2,7 +2,7 @@
 
 This is a reference MCP Server implementation of the [draft Authorization spec updates](https://modelcontextprotocol.io/specification/draft/basic/authorization#2-3-authorization-server-discovery) using the official typescript sdk.
 
-It can be used with this postman collection
+This repo can be used with this [Postman collection](https://www.postman.com/universal-crescent-673411/workspace/mcp-servers)
 
 ## Authentication Providers
 
