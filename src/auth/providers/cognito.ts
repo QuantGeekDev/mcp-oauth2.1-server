@@ -5,6 +5,7 @@ import {
   ACCESS_TOKEN_SIGN_ALGORITHM,
   COGNITO_CONFIG,
 } from "../../config/auth.config.js";
+import { buildUnauthorizedBearer as buildBearer } from "../utils.js";
 
 const certClient = jwksClient({
   jwksUri: COGNITO_CONFIG.OAUTH_CERT_ENDPOINT,
@@ -34,8 +35,18 @@ export const verifyToken = async (
   }) as jwt.Jwt;
 };
 
-export const buildUnauthorizedBearer = (resourceMetadataUrl: string) => {
-  return `Bearer resource_metadata="${resourceMetadataUrl}"`;
+export const buildUnauthorizedBearer = (
+  resourceMetadataUrl: string,
+  error?: string,
+  errorDescription?: string,
+  requiredScopes?: string[]
+) => {
+  return buildBearer(
+    resourceMetadataUrl,
+    error,
+    errorDescription,
+    requiredScopes
+  );
 };
 
 export const extractScopes = (payload: JwtPayload): string[] => {

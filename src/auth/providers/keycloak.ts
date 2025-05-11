@@ -7,6 +7,7 @@ import {
   REALM,
 } from "../../config/auth.config.js";
 import jwksClient, { SigningKey } from "jwks-rsa";
+import { buildUnauthorizedBearer as buildBearer } from "../utils.js";
 
 const OAUTH_CERT_ENDPOINT = `${KEYCLOAK_CONFIG.AUTHORIZATION_SERVER_HOSTNAME}:${KEYCLOAK_CONFIG.AUTHORIZATION_SERVER_PORT}/realms/${REALM}/protocol/openid-connect/certs`;
 
@@ -51,17 +52,13 @@ export const buildUnauthorizedBearer = (
   errorDescription?: string,
   requiredScopes?: string[]
 ) => {
-  let bearer = `Bearer realm="${REALM}", resource_metadata="${resourceMetadataUrl}"`;
-  if (error) {
-    bearer = `${bearer}, error="${error}"`;
-  }
-  if (errorDescription) {
-    bearer = `${bearer}, error_description="${errorDescription}"`;
-  }
-  if (requiredScopes) {
-    bearer = `${bearer}, scope="${requiredScopes.join(" ")}"`;
-  }
-  return bearer;
+  return buildBearer(
+    resourceMetadataUrl,
+    error,
+    errorDescription,
+    requiredScopes,
+    REALM
+  );
 };
 
 export const extractScopes = (payload: JwtPayload): string[] => {
