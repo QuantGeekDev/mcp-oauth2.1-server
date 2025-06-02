@@ -1,4 +1,5 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -10,14 +11,82 @@ import {
   getProtectedResourceMetadata,
   PROTECTED_RESOURCE_METADATA_ENDPOINT,
 } from "./auth/protected-resource.js";
+import {
+  getAuthorizationServerMetadata,
+  AUTHORIZATION_SERVER_METADATA_ENDPOINT,
+} from "./auth/authorization-server-metadata.js";
+import {
+  registerClient,
+  REGISTRATION_ENDPOINT,
+} from "./auth/dynamic-client-registration.js";
 
 const app = express();
+
+// Configure CORS to allow all origins
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow all origins
+    callback(null, true);
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "mcp-session-id",
+    "MCP-Protocol-Version",
+  ],
+  exposedHeaders: ["mcp-session-id", "WWW-Authenticate"],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
+// Log MCP Protocol Version if present
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const protocolVersion = req.headers["mcp-protocol-version"];
+  if (protocolVersion) {
+    console.log(
+      `MCP Protocol Version: ${protocolVersion} from ${req.method} ${req.path}`
+    );
+  }
+  next();
+});
+
 app.use(express.json());
 
 const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
+// Add root endpoint for debugging
+app.get("/", (req, res) => {
+  res.json({
+    service: "MCP OAuth Server",
+    version: "1.0.0",
+    endpoints: {
+      mcp: "/mcp",
+      protected_resource_metadata: PROTECTED_RESOURCE_METADATA_ENDPOINT,
+      authorization_server_metadata: AUTHORIZATION_SERVER_METADATA_ENDPOINT,
+    },
+    status: "running",
+  });
+});
+
 app.get(PROTECTED_RESOURCE_METADATA_ENDPOINT, async (req, res) => {
   getProtectedResourceMetadata(req, res);
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+  });
+});
+
+app.get(AUTHORIZATION_SERVER_METADATA_ENDPOINT, async (req, res) => {
+  getAuthorizationServerMetadata(req, res);
+});
+
+app.post(REGISTRATION_ENDPOINT, async (req, res) => {
+  registerClient(req, res);
 });
 
 app.post("/mcp", requireAuthentication, async (req, res) => {
